@@ -12,10 +12,15 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import django
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
 
+
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tripleT.settings')
+# django.setup() 
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tripleT.settings')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -80,8 +85,12 @@ ASGI_APPLICATION = 'tripleT.asgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydb',
+        'USER': 'postgres', # default user
+        'PASSWORD': '123', # default password
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

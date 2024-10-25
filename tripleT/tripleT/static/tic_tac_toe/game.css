@@ -1,0 +1,517 @@
+
+
+
+
+
+
+:root {
+    --primary-color: #013F38;
+    --secondary-color: #027267;
+    --accent-color: #00766A;
+    --background-color: #3DBDA7;
+    --text-color: #3D6975;
+    --border-color: #044D46;
+    --shadow-color: #2C8C87;
+    --my-gradient: linear-gradient(60deg, rgba(1,63,56,1) 0%, rgba(2,114,103,1) 16%, rgba(0,118,106,1) 25%, rgba(61,189,167,1) 40%, rgba(4,77,70,1) 73%);
+    --si-bar: linear-gradient(212deg, rgba(61,105,117,1) 67%, rgba(91,140,153,1) 78%, rgba(61,105,117,1) 89%);    
+    --win-lose-lcl: linear-gradient(212deg, rgba(61,105,117,1) 67%, rgba(91,140,153,1) 78%, rgba(61,105,117,1) 89%);    
+    
+    /*vars for fonts and text*/
+    --font-family-primary: 'Poppins', sans-serif;
+    --font-size-base-big: 3vw;
+    --font-size-base-large: 2.5vw;
+    --font-size-base-small: 1vw;
+    --font-size-base-medium: 1.5vw;
+    /* clamp(1.4em , 12vw, 1.5em) */
+    --font-weight-semibold: 600;
+    --line-height-base: 21px;
+    --text-align-default: left;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* width: 100%; */
+    height: 100vh;
+    letter-spacing: 3px;
+    word-spacing: 2px;
+    /* background-color: var(--primary-color); */
+}
+
+/** Mother Div and its childs should be handled here - boxing - sizes ... **/
+
+  .motherDiv {
+      width: 100%;
+      height: 100vh;
+      background-color: red;
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+    }
+    
+    
+    .sideBar {
+        width: 20%;
+        height: 100%;
+        background: rgb(61,105,117);
+        background: var(--si-bar); 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        border-right: 1% solid var(--shadow-color);
+        position: relative;
+  }
+  
+  .dynamic {
+      width: 100%;
+      height: 90%;
+      /* background: rgb(1,63,56); */
+      /* background: var(--my-gradient); */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      /* border-left: 2.5px solid rgba(61,105,117,1); */
+      /* padding-left: 100%; */
+    }
+    
+    
+    
+    
+    .all {
+        width: 100%;
+        height: 100%;
+        background: rgb(1,63,56);
+        background: var(--my-gradient);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        border-left: 1% solid rgba(61,105,117,1);
+    }
+    
+    
+    
+    
+    
+    
+    /**********************************************/
+  
+    .radio-item {
+        width: 25%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5%;
+        /* gap: 5px;     */
+        /* border-radius: 50%; */
+        /* background-color: #2C8C87; */
+        color: black;
+    }
+    .radio-item label{
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        color: #00766A;
+        cursor: pointer;
+        font-size: var(--font-size-base-medium);
+    }
+    /* Styling the radio button with a larger size */
+    input[type="radio"] {
+        /* width: 20px; */
+        /* height: 20px; */
+        background-color: red;
+    }
+    /********************************************************/
+    .ticTacGame {
+        width: 85%;
+        height: 100%;
+        margin-top: 0%;
+        opacity: 1;
+        /* margin-top: 120%; */
+        /* opacity: 0; */
+        position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: var(--accent-color);
+    font-size: var(--font-size-base-small);
+    font-family: var(--font-family-primary);
+    transition: margin-top 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.leftDivTicTac {
+    width: 45%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* List of LATEST GAMES */
+.latestGames {
+    width: 100%;
+    height: 50%;
+    background-color: var(--background-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.latestGames h2 {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.3;
+    position: absolute;
+}
+.listOfLG {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: auto;
+    position: absolute;
+}
+
+.unitLG {
+    width: 90%;
+    height: 20%;
+    background-color: var(--primary-color);
+    /* margin-top: 1%; */
+    display: flex;
+    opacity: 0.8;
+    margin: 1% auto 1% auto;
+    cursor: pointer;
+}
+
+/* GAME DESCRIPTION PART */
+.gameDescription{
+    width: 100%;
+    height: 20%;
+    background-color: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.gameDescription h4, .gameDescription p{
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: color 0.5s ease-in-out;
+}
+
+.gameDescription:hover p {
+    color: var(--primary-color);
+}
+
+
+
+
+
+
+
+/* PLAYGROUND BUTTON CSS */
+.playGround{
+    width: 100%;
+    height: 28%;
+    /* border-radius: 1em; */
+    border: 1% solid black;
+    display: flex; 
+}
+
+#rMatch, #invFriend {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+
+/* RANDOM MATCH */
+#rMatch {
+    /* width: 100%;
+    height: 100%; */
+    position: relative;
+    overflow: hidden;
+}
+
+#rMatch h3 {
+    width: 100%;
+    height: 100%;
+    /* text-align: center; */
+    background-color: var(--background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#btnHolder {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    position: absolute;
+    margin-left: 200%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    transition: margin-left 0.4s ease-in-out;
+}
+
+#btnHolder h2 {
+    width: 100%;
+    height: 30%;
+    background-color: var(--primary-color);
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radio-container {
+    width: 100%;
+    height: 30%;
+    background-color: var(--primary-color);
+    display: flex;
+    /* flex-direction: column; */
+    justify-content: space-around;
+    /* grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr); */
+    justify-items: center;
+    align-items: center;
+}
+
+.btns button {
+    width: 50%;
+    height: 30%;
+    cursor: pointer;
+}
+
+#rMatch:hover #btnHolder {
+    margin-left: 0%;
+}
+
+
+/* FRIENDS INVITE */
+
+#invFriend {
+    background-color: var(--primary-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.friendList {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    position: absolute;
+    margin-right: 200%;
+    background-color: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    overflow: auto  ;
+    /* align-items: center; */
+    justify-content: space-evenly;
+    transition: margin-right 0.4s ease-in-out;
+}
+
+.friendList::-webkit-scrollbar, .listOfLG::-webkit-scrollbar {
+    width: 0px;
+    opacity: 0;  /* Width of the scrollbar */
+}
+
+.friendList::-webkit-scrollbar-track, .listOfLG::-webkit-scrollbar-track {
+    background: var(--accent-color); /* Background of the scrollbar track */
+}
+
+.friendList::-webkit-scrollbar-thumb, .listOfLG::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color); /* Scrollbar color */
+    border-radius: 10px; /* Rounded corners for scrollbar */
+    border: 2px solid var(--accent-color); /* Adds some space around the thumb */
+}
+#invFriend:hover .friendList {
+    margin-right: 0%;
+}
+
+.unitFriend{
+    width: 100%;
+    height: 20%;
+    background-color: var(--border-color);
+    border-bottom: 0.5vh solid grey;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.picUF {
+    width: 3vh;
+    height: 3vh;
+    border-radius: 50%;
+    background-color: black;
+    border: 0.3vh solid green;
+}
+
+/**/
+.rightDivTicTac {
+    width: 45%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+
+
+
+/* local game CSS */
+.lclGameDiv{
+    width: 100%;
+    height: 71%;
+    /* border-radius: 1em; */
+    background-color: var(--background-color);
+    /* border: 1% solid black; */
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.boardlcl {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    align-items: center;
+    justify-items: center;
+}
+
+.bSlot {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* border: 0.5vh solid var(--border-color); */
+    /* border-radius: 5%; */
+    font-size: var(--font-size-base-big);
+    font-weight: bold;
+    transition: background-color 0.3s ease-in;
+}
+.bSlot:hover {
+    /* border: 1vh solid var(--border-color); */
+    background-color: var(--primary-color);
+}
+
+.dashBlcl {
+    width: 30%;
+    height: 100%;
+    background: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+.dashBlcl div {
+    width: 100%;
+    height: 21%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    /* background-color: #585858; */
+}
+
+.reset {
+    cursor: pointer;
+    background-color: var(--background-color);
+    color: rgb(71, 70, 55);
+    transition: background-color 0.7s ease-in-out, color 0.7s ease-in-out;
+}
+.reset:hover {
+    color: var(--background-color);
+    background-color: var(--primary-color);
+}
+
+.animWinLose {
+    width: 10%;
+    height: 100%;
+    cursor: pointer;
+    background: rgb(1,63,56);
+    background: linear-gradient(180deg, rgba(1,63,56,1) 20%, rgba(61,189,167,1) 40%, rgba(61,189,167,1) 60%, rgba(1,63,56,1) 80%);
+    color: var(--border-color);
+    letter-spacing: 0.2em;
+    transition: letter-spacing 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), color 0.3s cubic-bezier(0.25, 0.1, 0.25, 1); /* Customize the easing function */
+
+    /* transition: color 0.5s ease-in-out, letter-spacing 0.5 ease-in-out; */
+}
+
+.animWinLose:hover {
+    color: var(--secondary-color);
+    letter-spacing: 1em;
+}
+
+
+
+.vertical-text {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl; /* Rotates text vertically */
+    text-orientation: mixed;   /* Keeps the letters in normal orientation */
+    transform: rotate(180deg); /* Optional: Rotate text direction if needed */
+    font-size: 20px;
+  }
+
+
+/* Single player ---- Multiplayer */
+input[type="radio"] {
+    display: none;
+}
+.menuBtnLcl {
+    width: 100%;
+    height: 28%;
+    /* border-radius: 1em; */
+    border: 1% solid black;
+    display: flex; 
+}
+
+.radio-div  {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: var(--background-color);
+}
+
+/* #rb2p {
+} */
+#rb1p {
+    background-color: var(--primary-color);
+}
+
+input[type="radio"]:checked + label {
+    background-color: var(--primary-color);
+    color: white;
+}

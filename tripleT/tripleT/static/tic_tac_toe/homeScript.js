@@ -232,7 +232,8 @@
 // //     ["0", "0", "0"]
 // // ];
 
-
+let btn_play = `<button class="play_btn" onclick="playgame()">PLAY</button>`
+let matchingSocket = null
 
 class t3 {
     constructor() {
@@ -242,6 +243,7 @@ class t3 {
         <h1>Tic-Tac-Toe</h1>
         <div class="board_head">
         <div class="fp"></div>
+        <div class="turnShow"></div>
         <div class="sp"></div>
         </div>
         <div class="board">
@@ -256,14 +258,15 @@ class t3 {
         <div class="cell disabled" id="cell-8"></div>
         </div>
         <div class="winloss" id="losswin">
-        <h1></h1>
-        <button>Play again</button>
-        <button>quit</button>
+        <h1 id="msg"></h1>
+        <h1>Wins: <span id="winScore">0</span></h1>
+        <button id="playAgainBtn">Play again</button>
+        <button id="quitBtn">quit</button>
         </div>
         <button id="restart-button" onclick="reset()">Quit</button>
         </div>
         </div>`
-        this.matchingSocket = null;
+        // this.matchingSocket = null;
         this.currMsg = null;
         this.fplayer = "x";
         this.splayer = "o";
@@ -273,11 +276,12 @@ class t3 {
         this.elements = [];
         this.cont = document.getElementById("contIdx")
         this.winloss = document.getElementById("losswin")
+        this.first_to = document.querySelector('input[name="game-choice"]:checked').value;
         this.wins = 0;
         this.board = [
-            ["0", "0", "0"],
-            ["0", "0", "0"],
-            ["0", "0", "0"]
+            ["", "", ""],
+            ["", "", ""],
+            ["", "", ""]
         ]
         this.functionMap = new Map()
 
@@ -285,10 +289,21 @@ class t3 {
         this.functionMap.set("setup", this.setup_game_field.bind(this))
         // this.functionMap.set("start_game", this.start_game.bind(this))
         this.functionMap.set("in_game", this.in_game.bind(this))
-        this.functionMap.set("win", this.win.bind(this))
-        this.functionMap.set("loose", this.loose.bind(this))
-
+        this.functionMap.set("windrawloose", this.windrawloose.bind(this))
+        this.functionMap.set("inform", this.inform.bind(this))
+        // this.functionMap.set("loose", this.loose.bind(this))
+        // this.functionMap.set("draw", this.loose.bind(this))
+        this.playAgain.bind(this)
+        this.quit.bind(this)
         this.lmClickHandler = this.lmClick.bind(this);
+    }
+  
+    inform(){
+        // this.winloss = document.getElementById("losswin")
+        let announce = document.getElementById("msg")
+        announce.innerHTML = ""
+        announce.innerHTML = this.currMsg["msg"]
+        console.log("inform : ", announce)
     }
 
     waiting(){
@@ -306,42 +321,94 @@ class t3 {
             }, 1000);
     }
 
-    async win(){
-        this.board = this.currMsg["board"]
-        console.log("in win : ",this.board)
-        this.updateBoard()
-        await this.removeClick()
-        document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
-        document.querySelector('.winloss').style.display = 'flex';
-        // document.querySelector('.winloss').style.marginTop = '20vh';
-        // alert(this.currMsg["msg"])
+    playAgain()
+    {
+        console.log("gg you click on play again")
+        playAgainBtn.style.backgroundColor = 'green'
+        const msg = {
+            type : "playAgain",
+            // player : this.pSign,
+            // theBoard : this.board
+        }
+        matchingSocket.send(JSON.stringify(msg))
     }
-    async loose(){
+    
+    quit()
+    {
+        // console.log(this)
+        // quitGameBtn.style.backgroundColor = 'red'
+        const msg = {
+            type : "quitGame",
+            // player : this.pSign,
+            // theBoard : this.board
+        }
+        matchingSocket.send(JSON.stringify(msg))
+
+
+        // console.log("hello world")
+    }
+    
+    async windrawloose(){
+        console.log("In windrawLoose func")
         this.board = this.currMsg["board"]
-        console.log("in loose : ",this.board)
+        // console.log("in win : ",this.board)
         this.updateBoard()
         await this.removeClick()
         document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
         document.querySelector('.winloss').style.display = 'flex';
+        
+        let playAgainBtn = document.getElementById('playAgainBtn')
+        let quitGameBtn = document.getElementById('quitBtn')
+        let winScore = document.getElementById('winScore')
+        // console.log("Ha ch9amto : ",this.currMsg["wins"])
+        winScore.textContent = this.currMsg["wins"]
+        playAgainBtn.addEventListener('click', this.playAgain.bind(this))
+        quitGameBtn.addEventListener('click', this.quit.bind(this))
         // document.querySelector('.winloss').style.marginTop = '20vh';
         // alert(this.currMsg["msg"])
     }
 
+    
+    // async draw(){
+    //     this.board = this.currMsg["board"]
+    //     console.log("in draw : ",this.board)
+    //     this.updateBoard()
+    //     await this.removeClick()
+    //     document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
+    //     document.querySelector('.winloss').style.display = 'flex';
+    //     // document.querySelector('.winloss').style.marginTop = '20vh';
+    //     // alert(this.currMsg["msg"])
+    // }
+    // async loose(){
+    //     this.board = this.currMsg["board"]
+    //     console.log("in loose : ",this.board)
+    //     this.updateBoard()
+    //     await this.removeClick()
+    //     document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
+    //     document.querySelector('.winloss').style.display = 'flex';
+    //     // document.querySelector('.winloss').style.marginTop = '20vh';
+    //     // alert(this.currMsg["msg"])
+    // }
+
     async setup_game_field(){
+        this.cont = document.getElementById("contIdx")
         this.cont.outerHTML = this.htmlBoard;
+        // console.log(this.currMsg)
+        this.board = this.currMsg["board"]
+        // this.updateBoard()
         this.cells =  Array.from(document.getElementsByClassName("cell"))
-        console.log("ZZZzzzZZZzzZzzzZ:  ", this.currMsg)
+        // console.log("ZZZzzzZZZzzZzzzZ:  ", this.currMsg)
         this.pSign = this.currMsg["player"]
         let c = (this.pSign === this.fplayer) ? this.splayer : this.fplayer
         const injct_him = `<img src="../../static/tic_tac_toe/assets/test.png" alt="">
                     <h5>` + this.currMsg["him"]["fname"] + `</h5>
-                    <h3>` + this.currMsg["him"]["lvl"] + `</h3>
-                    <h1>` + c + `</h1>
+                    <h3>` + this.currMsg["wins"] + `</h3>
+                    <h1> He is ` + c + `</h1>
                 <p class="timr">` + this.currMsg["him"]["timer"] + `</p>`
         const injct_me = `<img src="../../static/tic_tac_toe/assets/test.png" alt="">
                     <h5>` + this.currMsg["me"]["fname"] + `</h5>
-                    <h3>` + this.currMsg["me"]["lvl"] + `</h3>
-                    <h1>` + this.pSign + `</h1>
+                    <h3>` + this.currMsg["wins"] + `</h3>
+                    <h1> You are ` + this.pSign + `</h1>
                 <p class="timr">` + this.currMsg["me"]["timer"] + `</p>`
         const fp = document.querySelector(".fp")
         const sp = document.querySelector(".sp")
@@ -350,8 +417,9 @@ class t3 {
         if ( this.cells.length === 9 )
         {
             this.elements = this.cells.map(id => document.getElementById(id));
-            console.log("after Replace size : ", this.elements.length)
-            if ( this.pSign === this.fplayer )
+            // console.log("after Replace size : ", this.elements.length)
+            // if ( this.pSign === this.fplayer )
+            if ( this.currMsg["turn"] )
                 await this.setBoardToClick()
             else
                 await this.removeClick()
@@ -382,19 +450,20 @@ class t3 {
     // }
 
     async in_game(){
-        if (this.currMsg["board"])
-            console.log("I got here buddy", this.currMsg)
+        // if (this.currMsg["board"])
+        //     console.log("I got here buddy", this.currMsg)
 
         this.board = this.currMsg["board"]
+        // console.log("Ha lboard a zab : ",this.currMsg)
         this.updateBoard()
-        if ( this.currMsg["turn"] === "on")
+        if ( this.currMsg["turn"] )
         {
             await this.setBoardToClick()
         }
         else
         {
-            this.save_ev.target.removeEventListener('click', this.lmClickHandler)
-            this.save_ev.target.classList.add("disabled")
+            // this.save_ev.target.removeEventListener('click', this.lmClickHandler)
+            // this.save_ev.target.classList.add("disabled")
             // save_ev.target.innerHTML += '<p>' + pSign + '</p>'
             await this.removeClick()
         }
@@ -402,88 +471,98 @@ class t3 {
 }
 
 function playgame () {
-    let gg = new t3()
-    gg.matchingSocket = new WebSocket(
+    if ( matchingSocket && matchingSocket.readyState === WebSocket.OPEN )
+        return
+    matchingSocket = new WebSocket(
         'ws://' + 'localhost:8001' + '/ws/game/'
     )
     // gg.matchingSocket.onopen = here i should tell if they are playing 3 5 or 7
     // and the tail size etc ....
-    gg.matchingSocket.onmessage = async function(event)
+    let gg = new t3()
+    matchingSocket.onopen = async function () {
+        const msg = {
+            "type" : "first_to",
+            "first_to": gg.first_to
+        }
+        matchingSocket.send(JSON.stringify(msg));
+    }
+    // console.log("WHAT ?")
+    matchingSocket.onmessage = async function(event)
     {
+        // console.log("ON MESSAGE")
         gg.currMsg = JSON.parse(event.data)
-            console.log("what i got : ", gg.currMsg.type)
-            console.log("all : ", gg.currMsg)
+        // console.log("what i got : ", gg.currMsg.type)
+        // console.log("all : ", gg.currMsg)
         if (gg.functionMap.has(gg.currMsg.type)){
+            // console.log("in IF WINDRaw")
             await gg.functionMap.get(gg.currMsg.type)()
         }
+        else
+        {
+            console.log("wayliiiiii  else ??")
+        }
+    }
+    matchingSocket.onclose = async function(event)
+    {
+        // let contIDX = document.getElementById("contIdx")
+        // contIDX.innerHTML = ""
+        // contIDX.innerHTML = `<button class="play_btn" onclick="playgame()">PLAY</button>`
+        // console.log("by by : ",gg.cont)
+        location.reload()
+        matchingSocket = null
+        gg = null
+
+        // console.log("by by : ",gg)
     }
 }
 
+
+
 // function that add and remove onclick event 
 
-t3.prototype.setBoardToClick = async function ()
-{
-    let i = 0
-    console.log("rah dkhel hna... : " ,this.elements.length)
-    this.cells.forEach( lm => {
-        if( lm )
-        {
-            if (this.board[Math.floor(i / 3)][i%3] === "0")
-            {
-                lm.addEventListener('click', this.lmClickHandler)
-                console.log("--------? what here ?--------")
-                lm.classList.remove("disabled")
-            }
+t3.prototype.setBoardToClick = async function (){
+    this.cells.forEach( (lm, i) => {
+        if (lm && this.board[Math.floor(i / 3)][i%3] === "") {
+            lm.addEventListener('click', this.lmClickHandler)
+            lm.classList.remove("disabled")
         }
-        i++
     })
 }
 
-t3.prototype.removeClick = async function ()
-{
+t3.prototype.removeClick = async function (){
     this.cells.forEach( lm => {
-        if( lm )
-        {
-            console.log("why dont i get here ???")
+        if( lm ) {
             lm.removeEventListener('click', this.lmClickHandler)
             lm.classList.add("disabled")
         }
     })
 }
 
-t3.prototype.lmClick = function (ev)
-{
+t3.prototype.lmClick = function (ev) {
     // console.log("hhhhhhhh : ", this.elements.length)
     const idx = this.cells.indexOf(ev.target)
-    // idx must be protected to from 0 to 8
-    this.board[Math.floor(idx / 3)][idx%3] = this.pSign
-    console.log("board[Math.floor(idx / 3)][idx%3]    ::: " ,this.pSign)
+    if( idx > 8 || idx < 0 )
+        return
 
-    // ill send you the board 
-    // with ingame msg
-    // who played now
+    console.log("EV = ", ev)
     this.save_ev = ev
     const msg = {
         type : "in_game",
-        player : this.pSign,
-        theBoard : this.board
+        clickIdx : idx
     }
-    this.matchingSocket.send(JSON.stringify(msg))
-    console.log(idx)
-    // ev.target.removeEventListener('click', lmClick)
-    // ev.target.classList.add("disabled")
-    // ev.target.innerHTML += '<p>' + pSign + '</p>'
+    matchingSocket.send(JSON.stringify(msg))
 }
 
-t3.prototype.updateBoard = function ()
-{
-    let i = 0;
-    this.cells.forEach( lm => {
-        // console.log("char by char : ", this.board[Math.floor(i / 3)][i%3])
-        if( lm && this.board[Math.floor(i / 3)][i%3] != "0" && lm.innerHTML.trim() === "")
-            lm.innerHTML += '<p>' + this.board[Math.floor(i / 3)][i%3] + '</p>'
-            // console.log(i)
-        i++
+t3.prototype.updateBoard = function () {
+    this.cells.forEach( (lm, i) => {
+        if( lm && this.board[Math.floor(i / 3)][i%3] != "" && lm.innerHTML.trim() === ""){
+            let g = this.board[Math.floor(i / 3)][i%3]
+            let p = document.createElement("p")
+            p.textContent = g
+            p.classList.add(g)
+            lm.innerHTML = ""
+            lm.appendChild(p)
+        }
     })
 }
 

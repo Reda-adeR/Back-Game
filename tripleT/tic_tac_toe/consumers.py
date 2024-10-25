@@ -2,199 +2,237 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from collections import defaultdict
 
-from collections import deque
+#import the model games
+#this for probably syncronizing server with database
+from channels.db import database_sync_to_async
 
 import json
 
-import random, copy
+import random, time
+from .consu_helper import *
 
-grp_m = deque()
-grp_m2 = deque()
-grp_m3 = deque()
-msgsDic = {
-    "setup"         : {
-        "type": "setup",
-        "player": "x",
-        "turn": "on",
-        "wins": 0,
-        "message": "Nice, you both connected!",
-        "him": {
-            "fname": "abbass",
-            "lname": "lamba",
-            "lvl"  : 0,
-            "timer": "",
-        },
-        "me": {
-            "fname": "hmida",
-            "lname": "lourim",
-            "lvl"  : 0,
-            "timer": "",
-        }
-    },
-    "in_game"       : {
-        "type"      : "in_game",
-        "turn"      : "",
-        "valid"     : "y",
-        # "moves"     : 0,
-        # "played_now": "",
-        "board"     : [
-            ["","",""],
-            ["","",""],
-            ["","",""]
-        ]
-    }
-}
-# async def boardParse(board, p1, p2):
-#     print("hey------")
-#     boardToStr = [char for row in board for char in row]
-#     p1c = boardToStr.count( p1["played_now"] ) or 0
-#     p2c = boardToStr.count( p2["played_now"] ) or 0
-#     p3c = boardToStr.count( '0' ) or 0
-#     print("num x : ",p1c, "num o : ",p2c, "zeros : ", p3c)
-#     if (len(boardToStr) != 9
-#         or p1c != p1["moves"]
-#         or p2c != p2["moves"]
-#         or p3c != 9 - (p1c+p2c)):
-#         return 0
-#     return 1
-# fc = None
-# sc = None
+#read me :
+# I will need to create a list of all the communication strings for parsing
+# 
 
+def switchturnUpdtboardAddmoves(p1,p2,idx,is_x_turn):
+    if( idx > 8 or idx < 0 ):
+        return 1
+    if is_x_turn:
+        p1.board[idx // 3][idx%3] = X_CHAR
+        p2.board[idx // 3][idx%3] = X_CHAR
+    else:
+        p1.board[idx // 3][idx%3] = O_CHAR
+        p2.board[idx // 3][idx%3] = O_CHAR
+    p1.board = p1.board
+    p2.board = p2.board
+    # print("p1Board: ", p1.board)
+    p1.turn, p2.turn = (T_OFF, T_ON) if is_x_turn else (T_ON, T_OFF)
+    p1.moves  += 1 if is_x_turn else 0
+    p2.moves += 0 if is_x_turn else 1
+    return 0
 
-class player:
-    def __init__(self, name):
-        self.channel_name = name
-        self.char = ''
-        self.turn = 'off'
-        self.moves = 0
-        self.name = 'reda'
-        self.lvl = 0.55
-        self.wins = 0
-        self.is_in_game = False
-        self.is_waiting = False
-        self.first_to = 1
-    # jpn = False # just played now
-
-
-
-game_box = {}
-win_combo = [
-    [0, 1, 2],  # Row 1
-    [3, 4, 5],  # Row 2
-    [6, 7, 8],  # Row 3
-    [0, 3, 6],  # Column 1
-    [1, 4, 7],  # Column 2
-    [2, 5, 8],  # Column 3
-    [0, 4, 8],  # Diagonal 1
-    [2, 4, 6]   # Diagonal 2
-]
 
 
 
 class test(AsyncWebsocketConsumer):
-    async def checkWin(self, board, pf, ps):
-        bts = ''.join([char for row in board for char in row])
+    async def setupPlayersAndInit(self, grp, game_type):
+        print("found TWO clients the game will INIT NOW : ")
+            # self.fc = 
+            # self.sc = 
+        player1 = player(grp.popleft())
+        player2 = player(grp.popleft())
+        gen_game_id = f"{player1.channel_name}_{player2.channel_name}_{int(time.time())}"
+
+        player1.game_id = player2.game_id = gen_game_id
+        player1.first_to = player2.first_to = game_type
+        player_game_map[player1.channel_name] = player_game_map[player2.channel_name]= gen_game_id
+
+        game_box[gen_game_id] = [player1, player2]
+        # game_box[player2.channel_name] = players
+
+        # here must get the data of each player to send it
+        await self.initGame([player1, player2], True)
+        
+    async def drawAnnounce(self, pf, ps):
+        pf.gameResult["msg"] = ps.gameResult["msg"]= "Match Draw !"
+        await self.channel_layer.send(pf.channel_name, pf.gameResult)
+        await self.channel_layer.send(ps.channel_name, ps.gameResult)
+        pf.is_inGame = ps.is_inGame = False
+
+    async def checkWin(self, pf, ps):
+        bts = ''.join([char if char else ' ' for row in pf.board for char in row])
+        print("board to string : |", bts,"|")
         for c in win_combo:
-            if bts[c[0]] == bts[c[1]] == bts[c[2]] and bts[c[0]] != "0":
-                pf.wins += 1 if bts[c[0]] == pf.char else 0
-                ps.wins += 1 if bts[c[0]] == ps.char else 0
-                fplayer_res = "win" if bts[c[0]] == pf.char else "loose"
-                splayer_res = "win" if bts[c[0]] == ps.char else "loose"
-                # print("nooo wayyyyyy : ", fplayer_res)                
-                await self.channel_layer.send(pf.channel_name, {
-                    "type"      : fplayer_res,
-                    "msg"       : "You "+fplayer_res+" !",
-                    "board"     : board,
-                })
-                await self.channel_layer.send(ps.channel_name, {
-                    "type"      : splayer_res,
-                    "msg"       : "You "+splayer_res+" !",      
-                    "board"     : board,
-                })
-                # print("yesss wayyyyyy : ", splayer_res )
+            if bts[c[0]] == bts[c[1]] == bts[c[2]] and bts[c[0]] != " ":
+                pf.wins = pf.wins + 1 if bts[c[0]] == pf.char else pf.wins + 0
+                ps.wins = ps.wins + 1 if bts[c[0]] == ps.char else ps.wins + 0
+                # print("pf wins : ", pf.wins)
+                # print("ps wins : ", ps.wins)
+                if (pf.wins == pf.first_to or ps.wins == ps.first_to):
+                    pf.res = "You won the game !" if bts[c[0]] == pf.char else "You lost the game !"
+                    ps.res = "You won the game !" if bts[c[0]] == ps.char else "You lost the game !"
+                else:
+                    # game didnt end but must inform who won who didnt before init
+                    await self.initGame([pf, ps], False)
+                    return 1
+                # here its the end of game and final result is sent 
+                await self.channel_layer.send(pf.channel_name, pf.gameResult)
+                await self.channel_layer.send(ps.channel_name, ps.gameResult)
+                pf.is_inGame = ps.is_inGame= False
                 return 1
         return 0
             
-
-    async def initGame(self,players):
+    async def informPlayAgain(self, toBeInformedObj):
+        await self.channel_layer.send(toBeInformedObj.channel_name, toBeInformedObj.playAgainMsg)
+        # {
+        #     "type"  : "inform",
+        #     "msg"   : "Let's Play again !"
+        # }
+    async def initGame(self,players, rand):
         print("In game INIT. . .")
+        # if typeInit:
+        #     players[0].char, players[1].char = ('o','x') if random.choice([True,False]) else ('x','o')
+        # else:
+        # from .models import games
+        # self.gamedb = games()
+        # self.gamedb.fp_id = players[0].channel_name
+        # self.gamedb.sp_id = players[1].channel_name
+        # self.gamedb.first_to = 1
+        # self.gamedb.num_of_games += 1
+        # players[0].moves = 0
+        # players[0].moves = 0
+        players[0].board = [["","",""], ["","",""], ["","",""]]
+        players[1].board = [["","",""], ["","",""], ["","",""]]
+        players[0].again = A_OFF
+        players[1].again = A_OFF
+        if rand:
+            players[0].char, players[1].char = (O_CHAR,X_CHAR) if random.choice([True,False]) else (X_CHAR,O_CHAR) 
+            players[0].turn, players[1].turn = (T_OFF,T_ON) if random.choice([True,False]) else (T_ON, T_OFF)
+        else:
+            # players[0].char, players[1].char = (O_CHAR,X_CHAR) if players[0].char == X_CHAR else (X_CHAR,O_CHAR)
+            players[0].turn, players[1].turn = (T_OFF,T_ON) if players[1].turn else (T_ON, T_OFF)
 
-        players[0].char, players[1].char = ('o','x') if random.choice([True,False]) else ('x','o') 
-        players[0].turn, players[1].turn = ('off','on') if players[1].char == 'x' else ('on', 'off')
-        players[0].is_in_game, players[1].is_in_game = True 
-        players[0].is_waiting, players[1].is_waiting = True 
-
-        p1 = copy.deepcopy(msgsDic["setup"])
-        p1["player"] = players[0].char
-        p1["turn"] = players[0].turn
-        p1["me"]["fname"] = "amine"
-        p1["him"]["fname"] = "issam"
-        p1["me"]["lvl"] = players[0].lvl
-
-
-        p2 = copy.deepcopy(msgsDic["setup"])
-        p2["player"] = players[1].char
-        p2["turn"] = players[1].turn
-        p2["me"]["fname"] = "issam"
-        p2["him"]["fname"] = "amine"
-        p2["me"]["lvl"] = players[1].lvl
+        # players[0].is_in_game, players[1].is_in_game = True 
+        # players[0].is_waiting, players[1].is_waiting = True 
 
         #here before sending i must complete the rest of data 
+        # await database_sync_to_async(self.gamedb.save)()
+        # print("p1  :",players[0].setup["wins"])
+        # print("p2  :",players[1].setup["wins"])
+        await self.channel_layer.send(players[0].channel_name, players[0].setup)
+        await self.channel_layer.send(players[1].channel_name, players[1].setup)
+        players[0].is_inGame = True
+        players[1].is_inGame = True
 
-        await self.channel_layer.send(players[0].channel_name, p1)
-        await self.channel_layer.send(players[1].channel_name, p2)
-    fc = ""
-    sc = ""
-    async def connect(self):
-        await self.accept()
-        grp_m.append(self.channel_name)
-        print("A NEW CLient has been added to ----> ", self.channel_name)
-
-        if len(grp_m) >= 2:
-            print("found TWO clients the game will INIT NOW : ")
-            # self.fc = 
-            # self.sc = 
-            player1 = player(grp_m.popleft())
-            player2 = player(grp_m.popleft())
-            players = [player1, player2]
-            # obj = {
-            #     self.fc: players,
-            #     self.sc: players
-            # }
-            game_box[player1.channel_name] = players
-            game_box[player2.channel_name] = players
-
-            # here must get the data of each player to send it
-            await self.initGame(players)
+    async def playAgain(self):
+        # print("PLAY AGAIN")
+        guId = player_game_map.get(self.channel_name, None)
+        if guId == None:
+            return
+        players = game_box.get(guId, None)
+        if players == None:
+            return
+        
+        if ( players[0].channel_name == self.channel_name ):
+            players[0].again = A_ON
+            await self.informPlayAgain(players[1])
         else:
-            await self.channel_layer.send(self.channel_name, {
-                "type": "waiting",
-                "message": "en couuuurs. ."
-            })
-            print("WAITING FOR A SECOND CLIENT ")
+            players[1].again = A_ON
+            await self.informPlayAgain(players[0])
+        if (players[0].again == A_ON and players[1].again == A_ON):
+            players[0].wins = 0
+            players[1].wins = 0
+            await self.initGame(players, False)
+        # check if both players are in play again mode
+            
+    async def quitGame(self):
+        print("QUIT GAME")
+        await self.close(code=1000)
+        # players = game_box.get(self.channel_name)
+        # if ( players[0].channel_name == self.channel_name ):
+
+    async def connect(self):
+        # Here i must check for the user himself is he auth-
+        # get his data needed for the game (name lvl img)
+        # know what type he want to play first to 1 3 5 7
+        await self.accept()
+        # await self.receive_json()
+    async def distribute(self,content):
+        print("gg")
+        game_type = content.get('first_to', None)
+    
+    # Extract the game type
+        # game_type = game_type_message.get('first_to', None)
+
+        if game_type is None:
+            await self.close(code=4001)  # Invalid or missing game type
+            return
+        
+        game_type = int(game_type)
+        if (game_type == 1):
+            grp_m.append(self.channel_name)
+            if len(grp_m) >= 2:
+                await self.setupPlayersAndInit(grp_m, game_type)
+                return
+        elif (game_type == 3):
+            grp_m3.append(self.channel_name)
+            if len(grp_m3) >= 2:
+                await self.setupPlayersAndInit(grp_m3, game_type)
+                return
+        elif (game_type == 5):
+            grp_m5.append(self.channel_name)
+            if len(grp_m5) >= 2:
+                await self.setupPlayersAndInit(grp_m5, game_type)
+                return
+        elif (game_type == 7):
+            grp_m7.append(self.channel_name)
+            if len(grp_m7) >= 2:
+                await self.setupPlayersAndInit(grp_m7, game_type)
+                return
+        else:
+            await self.close(code=4002)
+            return
+        # print("A NEW CLient has been added to ----> ", self.channel_name)
+
+        
+        await self.channel_layer.send(self.channel_name, {
+            "type": "waiting",
+            "message": "en couuuurs. ."
+        })
+        print("WAITING FOR A SECOND CLIENT ")
     
     async def disconnect(self, code):
         if self.channel_name in grp_m:
             grp_m.remove(self.channel_name)
+        elif self.channel_name in grp_m3:
+            grp_m3.remove(self.channel_name)
+        elif self.channel_name in grp_m5:
+            grp_m5.remove(self.channel_name)
+        elif self.channel_name in grp_m7:
+            grp_m7.remove(self.channel_name)
+            # grp_m.remove(self.channel_name)
+        if self.channel_name in game_box:
+            game_box.pop(self.channel_name)
+            print("IS FREED FROM GAME_BOX")
 
     async def chat_message(self, event):
         message = event['message']
         await self.send(text_data=message)
 
     #win and loose msgs
-    async def win(self, event):
+    async def windrawloose(self, event):
         await self.send(text_data=json.dumps({
             "type": event["type"],
             "msg" : event["msg"],
+            "wins": event["wins"],
             "board": event.get("board")
         }))
-    async def loose(self, event):
+    async def inform(self, event):
         await self.send(text_data=json.dumps({
             "type": event["type"],
-            "msg" : event["msg"],
-            "board": event.get("board")
+            "msg" : event["msg"]
         }))
-
         
     async def setup(self, event):
         # Handle setup messages to send to the WebSocket client
@@ -202,7 +240,9 @@ class test(AsyncWebsocketConsumer):
             "type": "setup",
             "player": event['player'],
             "turn": event['turn'],
+            "wins": event['wins'],
             "message": event['message'],
+            "board" : event['board'],
             "him": event.get('him'),
             "me": event.get('me')
         }))
@@ -224,66 +264,73 @@ class test(AsyncWebsocketConsumer):
             "board": event.get("board")
         }))
     
+    async def resetMoves(self, players):
+        players[0].moves = 0
+        players[1].moves = 0
+
     async def receive(self, text_data):
+        # data must be parsed here 
+        # and then create the players
         txt_json = json.loads(text_data)
-        print("before ################")
-        msg_type = txt_json['type']
-        print("after ################")
-        # if msg_type == 'setting_gup':
-        #     # create two players objects
-        #     # if len(grp_m) >= 2:
-        #     if ( len(grp_m2) >= 2 ):
-        #         print("here ::: ",len(grp_m2),":::: ", msg_type)
-        #         self.fc = grp_m2.popleft()
-        #         self.sc = grp_m2.popleft()
+        msg_type = txt_json.get("type", None)
+        if msg_type == None:
+            return
+        #must be handled if is already in game or is not in game 
+        if msg_type == 'first_to':
+            await self.distribute(txt_json)
+        guId = player_game_map.get(self.channel_name, None)
+        if guId == None:
+            return
+        players = game_box.get(guId, None)
+        if players == None:
+            print("players not found")
+            return
+        #prevent the other player from playing
+        # if (players[0].turn and players[0].channel_name != self.channel_name) or \
+        # (players[1].turn and players[1].channel_name != self.channel_name):
+        #     print("BOOOM")
+        #     return
+        firstP ,secondP = (players[0], players[1]) if players[0].char == X_CHAR else (players[1], players[0])
+        is_x_turn = firstP.turn
+        if msg_type == 'playAgain':
+            if firstP.is_inGame and secondP.is_inGame:
+                print("both are in game")
+                return
+            await self.playAgain()
+        if msg_type == 'quitGame':
+            await self.quitGame()
+        if msg_type == in_gaming:
+            clickIdx = txt_json.get("clickIdx", None)
+            if clickIdx == None:
+                return
+            # here its the board update and switch turn
+            if switchturnUpdtboardAddmoves(firstP, secondP, clickIdx, is_x_turn):
+                return
 
-        #         p1 = copy.deepcopy(msgsDic["setting_gup"])
-        #         p2 = copy.deepcopy(msgsDic["setting_gup"])
-        #         # p1 = msgsDic["setting_gup"]
-        #         # p2 = msgsDic["setting_gup"]
-        #         if ( random.choice([1,2]) == 1 ):
-        #             p1["player"] = "x"
-        #             p2["player"] = "o"
-        #         else:
-        #             p1["player"] = "o"
-        #             p2["player"] = "x"
-        #         await self.channel_layer.send(self.fc, p1)
-        #         await self.channel_layer.send(self.sc, p2)
-        if msg_type == 'in_game':
-            # must parse the board here 
-            # then check for a winner or draw
-            resp1 = copy.deepcopy(msgsDic["in_game"])
-            resp2 = copy.deepcopy(msgsDic["in_game"])
-
-            players = game_box.get(self.channel_name)
-            firstP ,secondP = (players[0], players[1]) if players[0].char == 'x' else (players[1], players[0])
-            
-            # board must be parsed here
-            # after parsing the board if any error found must return 
-            # an error msg to tell the player to play again 
-
-
-            is_x_turn = txt_json['player'] == 'x'
-
-            resp1["turn"], resp2["turn"] = ('off', 'on') if is_x_turn else ('on', 'off')
-            firstP.moves  += 1 if is_x_turn else 0
-            secondP.moves += 0 if is_x_turn else 1
-
-            
-            # resp1["played_now"] = txt_json['player']
-            # resp2["played_now"] = txt_json['player']
-            # await boardParse(txt_json['theBoard'], resp1, resp2)
             # here its the winner check
-            resp1["board"] = txt_json['theBoard']
-            resp2["board"] = txt_json['theBoard']
             if firstP.moves >= 3 or secondP.moves >= 3:
-                if await self.checkWin(txt_json['theBoard'], firstP, secondP):
+                if await self.checkWin(firstP, secondP):
+                    await self.resetMoves(players)
                     return
-                
-            # print("yOuuuuuuuuuuuuuuuu1: ", self.fc)
-            # print("yOuuuuuuuuuuuuuuuu2: ", self.sc)
-            print("lastlyllylylylylylyly")
+            # here its the draw check
+            if firstP.moves + secondP.moves == 9:
+                await self.drawAnnounce(firstP, secondP)
+                await self.resetMoves(players)
+                return
     
-            await self.channel_layer.send(firstP.channel_name, resp1)
-            await self.channel_layer.send(secondP.channel_name, resp2)
+            await self.channel_layer.send(firstP.channel_name, firstP.inGame)
+            await self.channel_layer.send(secondP.channel_name, secondP.inGame)
     
+
+
+
+
+
+
+
+
+# if hasattr(self, 'gamedb'):
+#     print("first gg")
+#     print("GG : ", self.gamedb.fp_wins)
+    # self.gamedb.fp_wins = firstP.board
+    # await database_sync_to_async(self.gamedb.save)()
