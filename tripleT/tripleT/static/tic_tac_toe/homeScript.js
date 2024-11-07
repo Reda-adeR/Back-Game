@@ -235,49 +235,133 @@
 let btn_play = `<button class="play_btn" onclick="playgame()">PLAY</button>`
 let matchingSocket = null
 
+class Player {
+    constructor(scoreElementId, armElementId, charElementId, turnElementId) {
+        this.scoreElement = document.getElementById(scoreElementId);
+        this.armElement = document.getElementById(armElementId);
+        this.charElement = document.getElementById(charElementId);
+        this.turnElement = document.getElementById(turnElementId);
+    }
+    updatePlayerTurn(t) {
+        
+        // Set to "Not Your Turn"
+        this.turn = t;
+        if (this.turn) {
+            this.turnElement.innerHTML = "✔";
+            this.turnElement.classList.add('your-turn');
+            this.turnElement.classList.remove('not-your-turn');
+        }
+        else
+        {
+            this.turnElement.innerHTML = "✘";
+            this.turnElement.classList.add('not-your-turn');
+            this.turnElement.classList.remove('your-turn');
+        }
+        // this.turnElement.style.backgroundColor = this.turn ? "green" : "red";
+    }
+    updatePlayerArmChar(s) {
+        this.sign = s;
+        this.charElement.innerHTML = this.sign;
+        this.armElement.innerHTML = this.sign === "x" ? "KATANA" : "SHURIKEN";
+    }
+    updatePlayerScore(sc) {
+        console.log("score-------------------- : ", sc)
+
+        this.score = sc;
+        this.scoreElement.innerHTML = this.score;
+    }
+}
+
+
 class t3 {
     constructor() {
         this.htmlBoard = `
-        <div id="contIdx" class="container">
-        <div class="board_holder">
-        <h1>Tic-Tac-Toe</h1>
-        <div class="board_head">
-        <div class="fp"></div>
-        <div class="turnShow"></div>
-        <div class="sp"></div>
+        <div id="contIdx" class="container df_fdc_jcc_aic">
+      <div class="board_holder df_fdc_jcsa_aic">
+      <!-- <h1 id="gameTitle">Tic-Tac-Toe</h1> -->
+      <div class="turnShowDiv df_fdc_jcc_aic">
+          <h1 class="turnShow df_jcc_aic" id="turnShow">
+            Game Set-Up
+          </h1>
+      </div>
+      <div class="" id="gameTimer">
+        <h1 class="df_jcc_aic">30s</h1>
+        <div class="loaderTimer"></div>
+      </div>
+      <div class="board_head">
+      <div class="fp df_fdc_jcsa_aic">
+        <div class="pl_profil df_fdc_jcc_aic" id="fp_profil">
+          <img src="assets/test.png" alt="" id="thisPlayer_img">
+          <h5 id="thisPlayer_name">abbass</h5>
         </div>
-        <div class="board">
-        <div class="cell disabled" id="cell-0"></div>
-        <div class="cell disabled" id="cell-1"></div>
-        <div class="cell disabled" id="cell-2"></div>
-        <div class="cell disabled" id="cell-3"></div>
-        <div class="cell disabled" id="cell-4"></div>
-        <div class="cell disabled" id="cell-5"></div>
-        <div class="cell disabled" id="cell-6"></div>
-        <div class="cell disabled" id="cell-7"></div>
-        <div class="cell disabled" id="cell-8"></div>
+        <div class="turnToggle df_jcc_aic" id="turnToggleZis">
+        </div>  
+        <div class="score_win df_fdc_jcc_aic">
+          <h1>LOT</h1>
+          <h3 id="thisPlayer_score">0</h3>
         </div>
+        <div class="sla7 df_fdc_jcc_aic" id="fpArm">
+          <h1 id="thisPlayer_arm"></h1>
+          <h2 id="thisPlayer_char"></h2>
+        </div>
+      </div>
+      <div class="board">
+      <div class="cell disabled" id="cell-0"></div>
+      <div class="cell disabled" id="cell-1"></div>
+      <div class="cell disabled" id="cell-2"></div>
+      <div class="cell disabled" id="cell-3"></div>
+      <div class="cell disabled" id="cell-4"></div>
+      <div class="cell disabled" id="cell-5"></div>
+      <div class="cell disabled" id="cell-6"></div>
+      <div class="cell disabled" id="cell-7"></div>
+      <div class="cell disabled" id="cell-8"></div>
+      </div>
+      <div class="sp df_fdc_jcsa_aic">
+        <div class="pl_profil df_fdc_jcc_aic" id="sp_profil">
+          <img src="assets/test.png" alt="" id="opponent_img">
+          <h5 id="opponent_name">hmida</h5>
+        </div>
+        <div class="turnToggle df_jcc_aic" id="turnToggleThat">
+        </div>    
+        <div class="score_win df_fdc_jcc_aic">
+          <h1>LOT</h1>
+          <h3 id="opponent_score">0</h3>
+        </div>
+          <div class="sla7 df_fdc_jcc_aic" id="spArm">
+            <h1 id="opponent_arm"></h1>
+            <h2 id="opponent_char"></h2>
+          </div>
+        </div>
+      </div>
+      
+      <button id="restart-button" onclick="reset()">Quit</button>
+      </div>
+      </div>`
+      this.gameOver = `
+      <div id="contIdx" class="container df_fdc_jcc_aic">
         <div class="winloss" id="losswin">
-        <h1 id="msg"></h1>
-        <h1>Wins: <span id="winScore">0</span></h1>
-        <button id="playAgainBtn">Play again</button>
-        <button id="quitBtn">quit</button>
+            <h1 id="msg"></h1>
+            <h2>Number of Games Played: <span id="nbofgames"></span></h1>
+            <h3>You Scored : <span id="winScore"></span></h1>
+            <h3>He Scored : <span id="hescore"></span></h1>
+            <button class="button" id="playAgainBtn">Play again</button>
+            <button class="button" id="quitBtn">quit</button>
         </div>
-        <button id="restart-button" onclick="reset()">Quit</button>
         </div>
-        </div>`
+      `
         // this.matchingSocket = null;
         this.currMsg = null;
-        this.fplayer = "x";
-        this.splayer = "o";
-        this.pSign = "";
+        this.zhisP = null
+        this.thatP = null
+        // this.pSign = "";
         this.save_ev = null;
         this.cells = [];
         this.elements = [];
         this.cont = document.getElementById("contIdx")
         this.winloss = document.getElementById("losswin")
+        this.turnShow = document.getElementById("turnShow")
         this.first_to = document.querySelector('input[name="game-choice"]:checked').value;
-        this.wins = 0;
+        // this.wins = 0;
         this.board = [
             ["", "", ""],
             ["", "", ""],
@@ -290,9 +374,12 @@ class t3 {
         // this.functionMap.set("start_game", this.start_game.bind(this))
         this.functionMap.set("in_game", this.in_game.bind(this))
         this.functionMap.set("windrawloose", this.windrawloose.bind(this))
+        this.functionMap.set("partyResult", this.partyRes.bind(this))
         this.functionMap.set("inform", this.inform.bind(this))
         // this.functionMap.set("loose", this.loose.bind(this))
         // this.functionMap.set("draw", this.loose.bind(this))
+        // this.setupDataBoard.bind(this)
+        // this.updateDataBoard.bind(this)
         this.playAgain.bind(this)
         this.quit.bind(this)
         this.lmClickHandler = this.lmClick.bind(this);
@@ -306,17 +393,36 @@ class t3 {
         console.log("inform : ", announce)
     }
 
+    partyRes(){
+        if ( this.currMsg["msg"] )
+            this.turnShow.innerHTML = "You Won !"
+        else
+            this.turnShow.innerHTML = "You Lost !"
+        // this.zhisP.updatePlayerScore(this.currMsg["myscore"])
+        // this.thatP.updatePlayerScore(this.currMsg["hiscore"])
+        // let score = this.currMsg["score"]
+        // this.wins+= score
+        // update score players
+        // switch to display Who won 
+        // 
+    }
     waiting(){
         let counter = 1
         console.log("counter : " , counter)
         const intervalId = setInterval(() => {
             this.cont.innerHTML = `
-                <h1 class="wait"> WAITING FOR YOUR OPPONNENT TO JOIN in ${counter}</h1>
+                <h1 class="wait df_fdc_jcsa_aic"> <p>Normally it takes less than 30 seconds</p>
+                    <div class="loader-ring">${counter}</div>
+                    <p>You can retry later in case you don't find a match !</p>
+                </h1>
             `
             counter++; // Increment the counter
             
-            if (counter > 10) { // Check if the counter has reached 20
+            if (counter > 30) { // Check if the counter has reached 20
                 clearInterval(intervalId); // Stop the timer && must re
+                // location.reload()
+                // matchingSocket = null
+                // gg = null
             }
             }, 1000);
     }
@@ -354,66 +460,70 @@ class t3 {
         // console.log("in win : ",this.board)
         this.updateBoard()
         await this.removeClick()
-        document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
+        if ( this.currMsg["msg"] === "Match Draw !")
+            return
+        // this.zhisP.updatePlayerScore(this.currMsg["wins"])
+        this.cont = document.getElementById("contIdx")
+        this.cont.outerHTML = this.gameOver;
+
+        // document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
         document.querySelector('.winloss').style.display = 'flex';
-        
+        // document.getElementById("turnShow").innerText = this.currMsg["msg"]
         let playAgainBtn = document.getElementById('playAgainBtn')
         let quitGameBtn = document.getElementById('quitBtn')
+        let msgRes = document.getElementById("msg")
         let winScore = document.getElementById('winScore')
+        let nb_games = document.getElementById('nbofgames')
+        let hescore = document.getElementById('hescore')
         // console.log("Ha ch9amto : ",this.currMsg["wins"])
+        msgRes.textContent = this.currMsg["msg"]
+        if ( this.currMsg["msg"] === "You won the game !")
+            msgRes.style.color = "green"
+        else
+            msgRes.style.color = "red"
         winScore.textContent = this.currMsg["wins"]
+        nb_games.textContent = this.currMsg["nbGames"]
+        hescore.textContent = this.currMsg["opwins"]
         playAgainBtn.addEventListener('click', this.playAgain.bind(this))
         quitGameBtn.addEventListener('click', this.quit.bind(this))
+
         // document.querySelector('.winloss').style.marginTop = '20vh';
         // alert(this.currMsg["msg"])
     }
 
-    
-    // async draw(){
-    //     this.board = this.currMsg["board"]
-    //     console.log("in draw : ",this.board)
-    //     this.updateBoard()
-    //     await this.removeClick()
-    //     document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
-    //     document.querySelector('.winloss').style.display = 'flex';
-    //     // document.querySelector('.winloss').style.marginTop = '20vh';
-    //     // alert(this.currMsg["msg"])
-    // }
-    // async loose(){
-    //     this.board = this.currMsg["board"]
-    //     console.log("in loose : ",this.board)
-    //     this.updateBoard()
-    //     await this.removeClick()
-    //     document.querySelector('.winloss').firstChild.textContent = this.currMsg["msg"]
-    //     document.querySelector('.winloss').style.display = 'flex';
-    //     // document.querySelector('.winloss').style.marginTop = '20vh';
-    //     // alert(this.currMsg["msg"])
-    // }
+    setupDataBoard(){
+        console.log(this.zhisP, this.thatP)
 
+        this.zhisP.updatePlayerScore(this.currMsg["wins"])
+        this.zhisP.updatePlayerArmChar(this.currMsg["player"])
+        this.zhisP.updatePlayerTurn(this.currMsg["turn"])
+
+
+        let hisChar = this.currMsg["player"] === "x" ? "o" : "x"
+        this.thatP.updatePlayerScore(this.currMsg["opwins"])
+        this.thatP.updatePlayerArmChar(hisChar)
+        this.thatP.updatePlayerTurn(!this.currMsg["turn"])
+    }
     async setup_game_field(){
+        // here must fill the data
         this.cont = document.getElementById("contIdx")
         this.cont.outerHTML = this.htmlBoard;
         // console.log(this.currMsg)
         this.board = this.currMsg["board"]
         // this.updateBoard()
         this.cells =  Array.from(document.getElementsByClassName("cell"))
-        // console.log("ZZZzzzZZZzzZzzzZ:  ", this.currMsg)
-        this.pSign = this.currMsg["player"]
-        let c = (this.pSign === this.fplayer) ? this.splayer : this.fplayer
-        const injct_him = `<img src="../../static/tic_tac_toe/assets/test.png" alt="">
-                    <h5>` + this.currMsg["him"]["fname"] + `</h5>
-                    <h3>` + this.currMsg["wins"] + `</h3>
-                    <h1> He is ` + c + `</h1>
-                <p class="timr">` + this.currMsg["him"]["timer"] + `</p>`
-        const injct_me = `<img src="../../static/tic_tac_toe/assets/test.png" alt="">
-                    <h5>` + this.currMsg["me"]["fname"] + `</h5>
-                    <h3>` + this.currMsg["wins"] + `</h3>
-                    <h1> You are ` + this.pSign + `</h1>
-                <p class="timr">` + this.currMsg["me"]["timer"] + `</p>`
-        const fp = document.querySelector(".fp")
-        const sp = document.querySelector(".sp")
-        fp.innerHTML = injct_him
-        sp.innerHTML = injct_me
+        // this.pSign = this.currMsg["player"]  // not needed ??
+        this.turnShow = document.getElementById("turnShow")
+        // this.turnShow.style.marginTop = "0%"
+  
+        this.zhisP = new Player("thisPlayer_score", "thisPlayer_arm", "thisPlayer_char", "turnToggleZis");
+        this.thatP = new Player("opponent_score", "opponent_arm", "opponent_char", "turnToggleThat");
+        
+        this.setupDataBoard()
+        // this.turnShow.style.marginTop = "100%"
+        this.turnShow.innerHTML = this.zhisP.turn ? "Your Turn" : "Opponent's Turn"
+        // this.turnShow.style.marginTop = "0%"
+
         if ( this.cells.length === 9 )
         {
             this.elements = this.cells.map(id => document.getElementById(id));
@@ -423,14 +533,7 @@ class t3 {
                 await this.setBoardToClick()
             else
                 await this.removeClick()
-            // const msg_start = {
-            //     type: "start_game"
-            // }
-            // if ( this.matchingSocket.readyState === WebSocket.OPEN)
-            // {
-            //     this.matchingSocket.send(JSON.stringify(msg_start))
-            //     console.log("i've sent this msg : ", msg_start)
-            // }
+
         }
         else
         {
@@ -439,34 +542,35 @@ class t3 {
         }
     }
 
-    // async start_game(){
-    //     console.log("Ha LI GLNA: ", this.currMsg["player"])
-    //     console.log("gg you are : " , this.pSign)
-    //     // console.log("oppo name  : " , this.currMsg["oppo"]["fname"])
-    //     // console.log("oppo lvl  : " , this.currMsg["oppo"]["lvl"])
-    //     // console.log("oppo time  : " , this.currMsg["oppo"]["timer"])
+    updateDataBoard(){
         
+        // let thisPlayerTurn = document.getElementById("turnToggleZis")
+
         
-    // }
+        // let opponentTurn = document.getElementById("turnToggleThat")
+
+
+        // thisPlayerTurn.style.backgroundColor = this.currMsg["turn"] ? "green" : "red"
+        // opponentTurn.style.backgroundColor = this.currMsg["turn"] ? "red" : "green"
+        this.zhisP.updatePlayerTurn(this.currMsg["turn"])
+        this.thatP.updatePlayerTurn(!this.currMsg["turn"])
+        // this.turnShow.classList.toggle("tshowanim")
+        // this.turnShow.style.marginTop = "100%"
+        this.turnShow.textContent = this.currMsg["turn"] ? "Your Turn" : "Opponent's Turn"
+        // this.turnShow.classList.toggle("tshowanim")
+        // this.turnShow.style.marginTop = "0%"
+    }
 
     async in_game(){
         // if (this.currMsg["board"])
-        //     console.log("I got here buddy", this.currMsg)
-
+            console.log("I got here buddy", this.currMsg)
         this.board = this.currMsg["board"]
-        // console.log("Ha lboard a zab : ",this.currMsg)
         this.updateBoard()
+        this.updateDataBoard()
         if ( this.currMsg["turn"] )
-        {
             await this.setBoardToClick()
-        }
         else
-        {
-            // this.save_ev.target.removeEventListener('click', this.lmClickHandler)
-            // this.save_ev.target.classList.add("disabled")
-            // save_ev.target.innerHTML += '<p>' + pSign + '</p>'
             await this.removeClick()
-        }
     }
 }
 
@@ -491,8 +595,8 @@ function playgame () {
     {
         // console.log("ON MESSAGE")
         gg.currMsg = JSON.parse(event.data)
-        // console.log("what i got : ", gg.currMsg.type)
-        // console.log("all : ", gg.currMsg)
+        console.log("what i got : ", gg.currMsg.type)
+        console.log("all : ", gg.currMsg)
         if (gg.functionMap.has(gg.currMsg.type)){
             // console.log("in IF WINDRaw")
             await gg.functionMap.get(gg.currMsg.type)()

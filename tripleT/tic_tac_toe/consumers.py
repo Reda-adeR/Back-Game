@@ -55,10 +55,11 @@ class test(AsyncWebsocketConsumer):
         await self.initGame([player1, player2], True)
         
     async def drawAnnounce(self, pf, ps):
-        pf.gameResult["msg"] = ps.gameResult["msg"]= "Match Draw !"
+        pf.gameResult["msg"] = ps.gameResult["msg"] = "Match Draw !"
         await self.channel_layer.send(pf.channel_name, pf.gameResult)
         await self.channel_layer.send(ps.channel_name, ps.gameResult)
-        pf.is_inGame = ps.is_inGame = False
+        # pf.is_inGame = ps.is_inGame = False
+        await self.initGame([pf, ps], False)
 
     async def checkWin(self, pf, ps):
         bts = ''.join([char if char else ' ' for row in pf.board for char in row])
@@ -74,12 +75,20 @@ class test(AsyncWebsocketConsumer):
                     ps.res = "You won the game !" if bts[c[0]] == ps.char else "You lost the game !"
                 else:
                     # game didnt end but must inform who won who didnt before init
+                    pf.partyResult["msg"] = True if bts[c[0]] == pf.char else False
+                    ps.partyResult["msg"] = True if bts[c[0]] == ps.char else False
+                    await self.channel_layer.send(pf.channel_name, pf.partyResult)
+                    await self.channel_layer.send(ps.channel_name, ps.partyResult)
                     await self.initGame([pf, ps], False)
                     return 1
                 # here its the end of game and final result is sent 
+                pf.gameResult["opwins"] = ps.wins
+                ps.gameResult["opwins"] = pf.wins
+                ps.gameResult["nbGames"] = pf.gameResult["nbGames"] = pf.nbGames
                 await self.channel_layer.send(pf.channel_name, pf.gameResult)
                 await self.channel_layer.send(ps.channel_name, ps.gameResult)
                 pf.is_inGame = ps.is_inGame= False
+                ps.nbGames = pf.nbGames = 0
                 return 1
         return 0
             
@@ -102,6 +111,9 @@ class test(AsyncWebsocketConsumer):
         # self.gamedb.num_of_games += 1
         # players[0].moves = 0
         # players[0].moves = 0
+        players[0].nbGames += 1
+        players[1].nbGames += 1
+        print("nbGames : ", players[0].nbGames)
         players[0].board = [["","",""], ["","",""], ["","",""]]
         players[1].board = [["","",""], ["","",""], ["","",""]]
         players[0].again = A_OFF
@@ -112,6 +124,8 @@ class test(AsyncWebsocketConsumer):
         else:
             # players[0].char, players[1].char = (O_CHAR,X_CHAR) if players[0].char == X_CHAR else (X_CHAR,O_CHAR)
             players[0].turn, players[1].turn = (T_OFF,T_ON) if players[1].turn else (T_ON, T_OFF)
+        players[0].setup["opwins"] = players[1].wins
+        players[1].setup["opwins"] = players[0].wins
 
         # players[0].is_in_game, players[1].is_in_game = True 
         # players[0].is_waiting, players[1].is_waiting = True 
@@ -226,6 +240,8 @@ class test(AsyncWebsocketConsumer):
             "type": event["type"],
             "msg" : event["msg"],
             "wins": event["wins"],
+            "nbGames": event["nbGames"],
+            "opwins": event["opwins"],
             "board": event.get("board")
         }))
     async def inform(self, event):
@@ -233,7 +249,13 @@ class test(AsyncWebsocketConsumer):
             "type": event["type"],
             "msg" : event["msg"]
         }))
-        
+    
+    async def partyResult(self, event):
+        await self.send(text_data=json.dumps({
+            "type": event["type"],
+            "player": event["player"],
+            "msg" : event["msg"]
+        }))
     async def setup(self, event):
         # Handle setup messages to send to the WebSocket client
         await self.send(text_data=json.dumps({
@@ -241,6 +263,7 @@ class test(AsyncWebsocketConsumer):
             "player": event['player'],
             "turn": event['turn'],
             "wins": event['wins'],
+            "opwins": event['opwins'],
             "message": event['message'],
             "board" : event['board'],
             "him": event.get('him'),

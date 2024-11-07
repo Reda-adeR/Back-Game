@@ -5,6 +5,7 @@ in_gaming   = "in_game"
 game_reslt  = "windrawloose"
 wait4Match  = "waiting"
 rePlay_req  = "inform"
+party_reslt = "partyResult"
 
 T_ON    = True
 A_ON    = True
@@ -39,21 +40,20 @@ msgsDic = {
     game_setup         : {
         "type": "setup",
         "player": "",
-        "turn": T_OFF,
         "wins": 0,
+        "opwins": 0,
+        "turn": T_OFF,
         "message": "Nice, you both connected!",
         "board" : [["","",""], ["","",""], ["","",""]],
         "him": {
             "fname": "abbass",
             "lname": "lamba",
             "lvl"  : 0,
-            "timer": "",
         },
         "me": {
             "fname": "hmida",
             "lname": "lourim",
             "lvl"  : 0,
-            "timer": "",
         }
     },
     in_gaming       : {
@@ -67,8 +67,15 @@ msgsDic = {
     game_reslt  :   {
         "type"      : "windrawloose",
         "msg"       : "",
+        "nbGames"   : 0,
         "wins"      : 0,
+        "opwins"    : 0,
         "board"     : []
+    },
+    party_reslt :   {
+        "type"      : "partyResult",
+        "player"    : "",
+        "msg"       : False
     },
     rePlay_req        :   {
         "type"  : "inform",
@@ -92,6 +99,7 @@ class player:
         self.moves = 0
         self.name = 'reda'
         self.lvl = 0.55
+        self.nbGames = 0
         self._wins = 0
         self.again = A_OFF
         self._res = 'Draw Match !'
@@ -100,6 +108,7 @@ class player:
         self.setup  = copy.deepcopy(msgsDic[game_setup])
         self.inGame = copy.deepcopy(msgsDic[in_gaming])
         self.gameResult = copy.deepcopy(msgsDic[game_reslt])
+        self.partyResult = copy.deepcopy(msgsDic[party_reslt])
         self.playAgainMsg   = copy.deepcopy(msgsDic[rePlay_req])
         self.waitingMsg = copy.deepcopy(msgsDic[wait4Match])
     
@@ -109,8 +118,9 @@ class player:
     @wins.setter
     def wins(self, value):
         self._wins = value
-        self.setup["wins"] = value
+        self.partyResult["myscore"] = value
         self.inGame["wins"] = value
+        self.setup["wins"] = value
         self.gameResult["wins"] = value
 
     @property
@@ -128,6 +138,7 @@ class player:
     @char.setter
     def char(self,value):
         self._char = value
+        self.gameResult["player"] = value
         self.setup["player"] = value
 
     @property
