@@ -36,21 +36,39 @@ def switchturnUpdtboardAddmoves(p1,p2,idx,is_x_turn):
 
 
 class test(AsyncWebsocketConsumer):
+    #function for initializing the game table
+    async def dbInit(self, gameid, game_type):
+        from .models import games
+        from asgiref.sync import sync_to_async
+        game, created = await sync_to_async(games.objects.get_or_create)(
+            game_id=gameid,
+            first_to=game_type
+            )
+        if not created:
+            game.game_id = gameid
+            game.first_to = game_type
+            await sync_to_async(game.save)()
+    
+    # async def dbUpdate(self, gameid,winid, losid, lstwinsp1, lstwinsp2, nofg):
+    def genIdGameAndSendToGameBox(self, p1, p2, game_type):
+        gen_game_id = f"{p1.channel_name}_{p2.channel_name}_{int(time.time())}"
+        p1.game_id = p2.game_id = gen_game_id
+        p1.first_to = p2.first_to = game_type
+        player_game_map[p1.channel_name] = player_game_map[p2.channel_name] = gen_game_id
+        game_box[gen_game_id] = [p1, p2]
+
+        return
+
     async def setupPlayersAndInit(self, grp, game_type):
         print("found TWO clients the game will INIT NOW : ")
             # self.fc = 
             # self.sc = 
         player1 = player(grp.popleft())
         player2 = player(grp.popleft())
-        gen_game_id = f"{player1.channel_name}_{player2.channel_name}_{int(time.time())}"
-
-        player1.game_id = player2.game_id = gen_game_id
-        player1.first_to = player2.first_to = game_type
-        player_game_map[player1.channel_name] = player_game_map[player2.channel_name]= gen_game_id
-
-        game_box[gen_game_id] = [player1, player2]
         # game_box[player2.channel_name] = players
-
+        # create or not db table for this game
+        self.genIdGameAndSendToGameBox(player1, player2, game_type)
+        await self.dbInit(player1.game_id, game_type)
         # here must get the data of each player to send it
         await self.initGame([player1, player2], True)
         
@@ -82,13 +100,13 @@ class test(AsyncWebsocketConsumer):
                     await self.initGame([pf, ps], False)
                     return 1
                 # here its the end of game and final result is sent 
-                pf.gameResult["opwins"] = ps.wins
-                ps.gameResult["opwins"] = pf.wins
+                pf.gameResult["opwins"]  = ps.wins
+                ps.gameResult["opwins"]  = pf.wins
                 ps.gameResult["nbGames"] = pf.gameResult["nbGames"] = pf.nbGames
                 await self.channel_layer.send(pf.channel_name, pf.gameResult)
                 await self.channel_layer.send(ps.channel_name, ps.gameResult)
-                pf.is_inGame = ps.is_inGame= False
-                ps.nbGames = pf.nbGames = 0
+                pf.is_inGame = ps.is_inGame = False
+                ps.nbGames   = pf.nbGames   = 0
                 return 1
         return 0
             
@@ -111,6 +129,9 @@ class test(AsyncWebsocketConsumer):
         # self.gamedb.num_of_games += 1
         # players[0].moves = 0
         # players[0].moves = 0
+        # if rand:
+            #i will need to delete both players from game_box and player_game_map 
+
         players[0].nbGames += 1
         players[1].nbGames += 1
         print("nbGames : ", players[0].nbGames)
