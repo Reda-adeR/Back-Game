@@ -45,7 +45,7 @@ class TicTacToeGame {
         this.playerMode = mode;
         this.resetGame(); // Reset the board whenever mode changes
         this.animWinLose.textContent = 'START'; // Update the text back to "START"
-        this.startButton.textContent = 'Start'; // Reset start button text
+        this.startButton.textContent = 'START'; // Reset start button text
     }
 
     // Start the game by enabling the board
@@ -155,7 +155,7 @@ class TicTacToeGame {
             slot.style.pointerEvents = 'none'; // Disable interaction
         });
 
-        this.startButton.textContent = 'Start Again'; // Update Start button for a new game
+        this.startButton.textContent = 'START AGAIN'; // Update Start button for a new game
     }
 
     // Enable the board (after clicking start or after bot's turn)
@@ -217,3 +217,9 @@ class TicTacToeGame {
 document.addEventListener('DOMContentLoaded', () => {
     const game = new TicTacToeGame();
 });
+
+
+
+
+// ----------------------
+

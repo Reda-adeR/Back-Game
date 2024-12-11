@@ -13,6 +13,7 @@ from django.core.asgi import get_asgi_application
 from django.urls import path
 from tic_tac_toe.consumers import test
 from channels.routing import ProtocolTypeRouter, URLRouter
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tripleT.settings')
@@ -21,7 +22,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tripleT.settings')
 
 
 application = ProtocolTypeRouter({
-    "http" : get_asgi_application(),
+    "http" : ASGIStaticFilesHandler( get_asgi_application() ),
     "websocket" : URLRouter([
         path("ws/game/",test.as_asgi())
     ])

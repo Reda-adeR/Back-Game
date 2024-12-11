@@ -19,7 +19,8 @@ from django.urls import path
 from tic_tac_toe import views
 
 urlpatterns = [
-    path('home/', views.home, name="home"),
+    path('', views.home, name="home"),
     path('index/', views.index, name="index"),
     path('admin/', admin.site.urls),
+    path('gamesByWinId/<str:user_win_id>/', views.gamesByWinId.as_view(), name="gamesByWinId"),
 ]
