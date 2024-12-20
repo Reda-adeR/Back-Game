@@ -1,0 +1,20 @@
+
+
+services:
+  backend:
+    image: backend
+    build: backend/.
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/content:/var/www/html
+  # db:
+  #   image: postgres
+  #   environment:
+  #     POSTGRES_DB: mydb
+  #     POSTGRES_USER: myuser
+  #     POSTRES_PASSWORD: resuym
+  #   ports:
+  #     - "5432:5432"
+  
+
