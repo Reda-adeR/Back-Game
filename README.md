@@ -6,12 +6,18 @@ After clonning the repo :
 -  browse : http://localhost:8000
 
 Right side is the local game 
+
+
+
 ![App Screenshot](./assets/right.png)
 
 You can play against a Bot player, or 2 players Mode.
 
 
 Left side is the remote game
+
+
+
 ![App Screenshot](./assets/left.png)
 
 Open two tabs and select the same game mode,
